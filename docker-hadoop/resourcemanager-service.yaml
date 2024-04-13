@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+  labels:
+    io.kompose.service: resourcemanager
+  name: resourcemanager-service
+spec:
+  ports:
+    - name: resourcemanager-port  # 更具描述性的名称
+      port: 8088
+      targetPort: 8088
+  selector:
+    io.kompose.service: resourcemanager

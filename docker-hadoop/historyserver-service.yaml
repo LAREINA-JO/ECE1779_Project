@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  labels:
+    io.kompose.service: historyserver
+  name: historyserver-service
+spec:
+  ports:
+    - name: historyserver-ui  # 为端口提供描述性名称
+      port: 8188
+      targetPort: 8188
+  selector:
+    io.kompose.service: historyserver

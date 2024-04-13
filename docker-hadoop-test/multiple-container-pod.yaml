@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hadoop-cluster
+  labels:
+    app: hadoop
+spec:
+  volumes:
+    # - name: hadoop-namenode
+    #   emptyDir: {}
+    # - name: hadoop-datanode
+    #   emptyDir: {}
+    # - name: hadoop-historyserver
+    #   emptyDir: {}
+    - name: jobs-volume
+      persistentVolumeClaim:
+        claimName: jobs-pvc
+    - name: namenode-claim
+      persistentVolumeClaim:
+        claimName: namenode-claim
+    - name: hadoop-namenode
+      persistentVolumeClaim:
+        claimName: hadoop-namenode
+    - name: hadoop-datanode
+      persistentVolumeClaim:
+        claimName: hadoop-datanode
+    - name: hadoop-historyserver
+      persistentVolumeClaim:
+        claimName: hadoop-historyserver
+      
+
+
+
+  containers:
+    - name: namenode
+      image: us-central1-docker.pkg.dev/q3assignment2-416005/ece1779project/namenode:v2
+      ports:
+        - containerPort: 9870
+        - containerPort: 9000
+      resources:
+        requests:
+          memory: "1.5Gi"
+          cpu: "400m"
+        limits:
+          memory: "1.5Gi"
+          cpu: "400m"
+      volumeMounts:
+        - mountPath: /hadoop/dfs/name
+          name: hadoop-namenode
+        - mountPath: /app
+          name: jobs-volume
+      env:
+        - name: CLUSTER_NAME
+          value: "hadoop-cluster"
+        - name: HOME
+          value: "/app"
+        - name: SPARK_HOME
+          value: "/usr/local/lib/python3.7/dist-packages/pyspark"
+        - name: HIVE_HOME
+          value: "/hive/apache-hive-3.1.3-bin"
+      envFrom:
+        - configMapRef:
+            name: hadoop-config # 你需要创建一个名为hadoop-config的ConfigMap来存储环境变量
+      
+
+    - name: datanode
+      image: us-central1-docker.pkg.dev/q3assignment2-416005/ece1779project/datanode:v1
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "200m"
+        limits:
+          memory: "1Gi"
+          cpu: "200m"
+      ports:
+        - containerPort: 9864
+      volumeMounts:
+        - mountPath: /hadoop/dfs/data
+          name: hadoop-datanode
+      env:
+        - name: SERVICE_PRECONDITION
+          value: "localhost:9870"
+      envFrom:
+        - configMapRef:
+            name: hadoop-config
+
+    - name: resourcemanager
+      image: us-central1-docker.pkg.dev/q3assignment2-416005/ece1779project/resourcemanager:v1
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "200m"
+        limits:
+          memory: "1Gi"
+          cpu: "200m"
+      ports:
+        - containerPort: 8088
+      env:
+        - name: SERVICE_PRECONDITION
+          value: "localhost:9000 localhost:9870 localhost:9864"
+      envFrom:
+        - configMapRef:
+            name: hadoop-config
+
+    - name: nodemanager
+      image: us-central1-docker.pkg.dev/q3assignment2-416005/ece1779project/nodemanager:v1
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "500m"
+      ports:
+        - containerPort: 8042
+      env:
+        - name: SERVICE_PRECONDITION
+          value: "localhost:9000 localhost:9870 localhost:9864 localhost:8088"
+      envFrom:
+        - configMapRef:
+            name: hadoop-config
+
+    - name: historyserver
+      image: us-central1-docker.pkg.dev/q3assignment2-416005/ece1779project/historyserver:v1
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "200m"
+        limits:
+          memory: "1Gi"
+          cpu: "200m"
+      ports:
+        - containerPort: 8188
+      volumeMounts:
+        - mountPath: /hadoop/yarn/timeline
+          name: hadoop-historyserver
+      envFrom:
+        - configMapRef:
+            name: hadoop-config

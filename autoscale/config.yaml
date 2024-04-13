@@ -1,0 +1,14 @@
+autoscale:
+  namespace: default
+  deployment_name: your-deployment
+  cpu_threshold: 0.75
+  memory_threshold: 0.75
+  scale_up_multiplier: 2
+  scale_down_multiplier: 0.5
+  scale_resources: true
+
+prometheus:
+  url: http://prometheus-server.default.svc.cluster.local
+
+environment:
+  local: true

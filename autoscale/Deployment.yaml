@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscaler-service
+  template:
+    metadata:
+      labels:
+        app: autoscaler-service
+    spec:
+      containers:
+      - name: autoscaler-container
+        image: autoscaler-image:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "500m"
+            memory: "500Mi"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: autoscaler-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: autoscaler-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/status"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: autoscaler-role-binding
+subjects:
+- kind: ServiceAccount
+  name: autoscaler-service
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: autoscaler-role
+  apiGroup: rbac.authorization.k8s.io
+

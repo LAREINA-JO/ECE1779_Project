@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  labels:
+    io.kompose.service: namenode
+  name: namenode-service
+spec:
+  ports:
+    - name: namenode-http  # 假设9870端口用于HTTP通信
+      port: 9870
+      targetPort: 9870
+    - name: namenode-ipc  # 假设9000端口用于IPC（进程间通信）
+      port: 9000
+      targetPort: 9000
+  selector:
+    io.kompose.service: namenode
